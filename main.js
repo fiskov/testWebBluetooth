@@ -4,6 +4,7 @@ CHAR_REQ = 0xFF01
 
 // Получение ссылок на элементы UI
 let connectButton = document.getElementById('connect');
+let connectAndActiveButton = document.getElementById('connectAndActive');
 let disconnectButton = document.getElementById('disconnect');
 let sendHiButton = document.getElementById('sendHiButton');
 let sendActiveButton = document.getElementById('sendActiveButton');
@@ -19,6 +20,16 @@ let idCounter = 0
 // Подключение к устройству при нажатии на кнопку Connect
 connectButton.addEventListener('click', function() {
   connect();
+});
+connectAndActiveButton.addEventListener('click', function() {
+  console.time("connectTimer")
+  connect().
+  then(_=> {
+    writeToCharacteristic(characteristicCacheReq, strToArr("706869")).
+    then( _ => writeToCharacteristic(characteristicCacheReq, strToArr("203C"))
+    )
+  });
+  
 });
 
 // Отключение от устройства при нажатии на кнопку Disconnect
@@ -239,5 +250,5 @@ function writeToCharacteristic(characteristic, data) {
     return;
   }
   log(arrayBufferToHex(data), 'out');
-  characteristic.writeValue(data);
+  return characteristic.writeValueWithResponse(data);
 }
