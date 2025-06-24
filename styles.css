@@ -1,18 +1,34 @@
+body, html {
+  height: 100vh;
+  margin: 0;
+  font-family:monospace;
+  display: flex;
+  flex-direction: column;
+}
+#buttons button, input {
+    margin: 0.5em 0.5em 0 0.5em;
+    padding: 0.5em;
+}
 #terminal {
-    display: block;
+    flex: 1;
     border: 1px solid gray;
-    flex-grow: 1;
-    overflow: auto;
-    padding: 4px 0;    
+    padding: 4px 0;
+    overflow-y: scroll;
+
+    height: 100%;
 }
 #terminal div {
     color: gray;
 }
 
 #terminal div.out {
-    color: red;
+    color: green;
 }
 
 #terminal div.in {
     color: blue;
+}
+
+#terminal div.err {
+    color: red;
 }

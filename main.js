@@ -5,12 +5,16 @@ CHAR_REQ = 0xFF01
 // Получение ссылок на элементы UI
 let connectButton = document.getElementById('connect');
 let disconnectButton = document.getElementById('disconnect');
-let hiButton = document.getElementById('hiButton');
+let sendHiButton = document.getElementById('sendHiButton');
+let sendActiveButton = document.getElementById('sendActiveButton');
+let sendSleepButton = document.getElementById('sendSleepButton');
+let sendGetSleepButton = document.getElementById('sendGetSleepButton');
+
 let terminalContainer = document.getElementById('terminal');
 let sendForm = document.getElementById('send-form');
 let inputField = document.getElementById('input');
 
-let hi_msg = new TextEncoder().encode("phi");
+let idCounter = 0
 
 // Подключение к устройству при нажатии на кнопку Connect
 connectButton.addEventListener('click', function() {
@@ -22,9 +26,22 @@ disconnectButton.addEventListener('click', function() {
   disconnect();
 });
 // Послать запрос "hi" на устройство
-hiButton.addEventListener('click', function() {
+sendHiButton.addEventListener('click', function() {
   writeToCharacteristic(characteristicCacheReq, strToArr("706869"));
 });
+// Послать запрос "Active" на устройство
+sendActiveButton.addEventListener('click', function() {
+  writeToCharacteristic(characteristicCacheReq, strToArr("203C"));
+});
+// Послать запрос "Sleep" на устройство
+sendSleepButton.addEventListener('click', function() {
+  writeToCharacteristic(characteristicCacheReq, strToArr("21100E"));
+});
+// Послать запрос "get Sleep" на устройство
+sendGetSleepButton.addEventListener('click', function() {
+  writeToCharacteristic(characteristicCacheReq, strToArr("21"));
+});
+
 // Обработка события отправки формы
 sendForm.addEventListener('submit', function(event) {
   event.preventDefault(); // Предотвратить отправку формы
@@ -133,24 +150,23 @@ function startNotifications(characteristic) {
       });
 }
 
+function dataViewToHex(view)
+{
+  let hex = '';
+  for (let i = 0; i < view.byteLength; i++) {
+    hex += view.getUint8(i).toString(16).padStart(2,'0').toUpperCase() + ' ';
+  }  
+  return hex
+}
+function arrayBufferToHex(buffer) { // buffer is an ArrayBuffer
+  return [...new Uint8Array(buffer)]
+      .map(x => x.toString(16).padStart(2, '0').toUpperCase())
+      .join(' ');
+}
+
 // Получение данных
 function handleCharacteristicValueChanged(event) {
-  
-  let value = new TextDecoder().decode(event.target.value);
-
-  for (let c of value) {
-    if (c === '\n') {
-      let data = readBuffer.trim();
-      readBuffer = '';
-
-      if (data) {
-        receive(data);
-      }
-    }
-    else {
-      readBuffer += c;
-    }
-  }
+  receive(dataViewToHex(event.target.value));
 }
 
 // Обработка полученных данных
@@ -160,8 +176,12 @@ function receive(data) {
 
 // Вывод в терминал
 function log(data, type = '') {
+  let id = 'item'+idCounter.toString(10)
+  idCounter += 1
+  
   terminalContainer.insertAdjacentHTML('beforeend',
-      '<div' + (type ? ' class="' + type + '"' : '') + '>' + data + '</div>');
+      '<div' + (type ? ' class="' + type + '"' : '') + ' id="'+id+'">' + data + '</div>');
+  terminalContainer.scrollTop = document.getElementById(id).offsetTop;
 }
 
 // Отключиться от подключенного устройства
@@ -205,11 +225,19 @@ function send(data) {
   }
 
   writeToCharacteristic(characteristicCacheReq, strToArr(data));
-
-  log(data, 'out');
 }
 
 // Записать значение (uint8array) в характеристику
 function writeToCharacteristic(characteristic, data) {
+  if (!data)
+  {
+    log("no data", 'err')
+    return;
+  } 
+  if (!characteristicCacheReq) {
+    log("no char", 'err')
+    return;
+  }
+  log(arrayBufferToHex(data), 'out');
   characteristic.writeValue(data);
 }
